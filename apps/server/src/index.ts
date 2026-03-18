@@ -10,7 +10,6 @@ import { usersRouter } from "./routes/users.js";
 import { locationsRouter } from "./routes/locations.js";
 import { categoriesRouter } from "./routes/categories.js";
 import { inventoryRouter } from "./routes/inventory.js";
-import { imagesRouter } from "./routes/images.js";
 import { settingsRouter } from "./routes/settings.js";
 import { fieldDefinitionsRouter } from "./routes/fieldDefinitions.js";
 import { requireAuth } from "./middleware/auth.js";
@@ -50,7 +49,6 @@ app.use("/api/users", requireAuth, usersRouter);
 app.use("/api/locations", requireAuth, locationsRouter);
 app.use("/api/categories", requireAuth, categoriesRouter);
 app.use("/api/inventory", requireAuth, inventoryRouter);
-app.use("/api/inventory", requireAuth, imagesRouter);
 app.use("/api/settings", requireAuth, settingsRouter);
 app.use("/api/field-definitions", requireAuth, fieldDefinitionsRouter);
 

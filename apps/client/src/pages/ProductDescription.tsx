@@ -261,21 +261,6 @@ export default function ProductDescription() {
         )}
       </section>
 
-      {item.images && item.images.length > 0 && (
-        <section className="rounded-xl border border-neutral-700 bg-neutral-800/50 p-5 space-y-4">
-          <h2 className="text-sm font-medium text-neutral-400 uppercase tracking-wider">Images</h2>
-          <div className="flex flex-wrap gap-3">
-            {item.images.map((img) => (
-              <img
-                key={img.id}
-                src={api.images.url(item.id, img.id)}
-                alt=""
-                className="h-28 w-28 object-cover rounded-lg border border-neutral-600"
-              />
-            ))}
-          </div>
-        </section>
-      )}
     </div>
   );
 }

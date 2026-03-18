@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../contexts/AuthContext";
@@ -36,7 +36,6 @@ export default function InventoryItemPage() {
     else navigate("/", { replace: true });
   };
   const queryClient = useQueryClient();
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const isNew = id === "new" || !id;
 
   const { data: locations } = useQuery({
@@ -54,7 +53,6 @@ export default function InventoryItemPage() {
   });
 
   const [form, setForm] = useState<ItemForm>(emptyForm);
-  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (isNew && locations?.length) {
@@ -142,19 +140,6 @@ export default function InventoryItemPage() {
     };
     if (isNew) createMutation.mutate(payload);
     else updateMutation.mutate(payload);
-  };
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !id || isNew) return;
-    setUploading(true);
-    try {
-      await api.images.upload(id, file);
-      queryClient.invalidateQueries({ queryKey: ["inventory", id] });
-    } finally {
-      setUploading(false);
-      e.target.value = "";
-    }
   };
 
   const saving = createMutation.isPending || updateMutation.isPending;
@@ -309,49 +294,6 @@ export default function InventoryItemPage() {
           )}
         </div>
 
-        {!isNew && (
-          <div>
-            <label className="block text-sm text-neutral-400 mb-1">Images</label>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="hidden"
-            />
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-              className="px-4 py-3 rounded-lg bg-neutral-700 hover:bg-neutral-600 disabled:opacity-50"
-            >
-              {uploading ? "Uploading…" : "Upload image"}
-            </button>
-            {item?.images && item.images.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-2">
-                {item.images.map((img) => (
-                  <div key={img.id} className="relative">
-                    <img
-                      src={api.images.url(item.id, img.id)}
-                      alt=""
-                      className="h-24 w-24 object-cover rounded-lg border border-neutral-600"
-                    />
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        await api.images.delete(item.id, img.id);
-                        queryClient.invalidateQueries({ queryKey: ["inventory", id] });
-                      }}
-                      className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-red-600 text-white text-xs"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
         {error && (
           <p className="text-red-400 text-sm">{error instanceof Error ? error.message : "Error"}</p>
         )}

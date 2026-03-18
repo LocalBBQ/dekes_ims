@@ -257,30 +257,11 @@ export const api = {
       form.append("file", file);
       const res = await fetch(`${base}/inventory/import`, {
         method: "POST",
-        credentials: "include",
         body: form,
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || res.statusText || "Import failed");
       return data as { created: number; updated: number; total: number };
     },
-  },
-  images: {
-    upload: (itemId: string, file: File) => {
-      const form = new FormData();
-      form.append("file", file);
-      return request<{
-        id: string;
-        itemId: string;
-        filePathOrUrl: string;
-        createdAt: string;
-      }>("/inventory/" + itemId + "/images", {
-        method: "POST",
-        body: form,
-      });
-    },
-    url: (itemId: string, imageId: string) => `${base}/inventory/${itemId}/images/${imageId}`,
-    delete: (itemId: string, imageId: string) =>
-      request<void>("/inventory/" + itemId + "/images/" + imageId, { method: "DELETE" }),
   },
 };

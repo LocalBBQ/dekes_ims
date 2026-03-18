@@ -5,7 +5,6 @@ import { prisma } from "../lib/prisma.js";
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 const itemInclude = {
     category: { select: { id: true, name: true } },
-    itemImages: { select: { id: true, filePathOrUrl: true, createdAt: true } },
     itemLocationQuantities: { include: { location: true } },
 };
 function toItem(row) {
@@ -24,12 +23,6 @@ function toItem(row) {
             locationName: q.location.name,
             quantity: q.quantity,
             quantityInUse: q.quantityInUse,
-        })),
-        images: row.itemImages.map((i) => ({
-            id: i.id,
-            itemId: row.id,
-            filePathOrUrl: i.filePathOrUrl,
-            createdAt: i.createdAt.toISOString(),
         })),
     };
 }

@@ -14,7 +14,6 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 *
 
 const itemInclude = {
   category: { select: { id: true, name: true } },
-  itemImages: { select: { id: true, filePathOrUrl: true, createdAt: true } },
   itemLocationQuantities: { include: { location: true } },
 };
 
@@ -28,7 +27,6 @@ function toItem(row: {
   reorderLink: string | null;
   createdAt: Date;
   updatedAt: Date;
-  itemImages: { id: string; filePathOrUrl: string; createdAt: Date }[];
   itemLocationQuantities: { locationId: string; quantity: number; quantityInUse: number; location: { id: string; name: string } }[];
 }) {
   return {
@@ -46,12 +44,6 @@ function toItem(row: {
       locationName: q.location.name,
       quantity: q.quantity,
       quantityInUse: q.quantityInUse,
-    })),
-    images: row.itemImages.map((i) => ({
-      id: i.id,
-      itemId: row.id,
-      filePathOrUrl: i.filePathOrUrl,
-      createdAt: i.createdAt.toISOString(),
     })),
   };
 }
