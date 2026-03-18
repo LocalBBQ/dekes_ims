@@ -1,6 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { useAuth } from "../contexts/AuthContext";
 import { api } from "../lib/api";
 
 const LOW_STOCK_THRESHOLD = 1;
