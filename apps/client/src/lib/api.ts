@@ -60,6 +60,7 @@ export const api = {
         method: "POST",
         json: body,
       }),
+    delete: (id: string) => request<void>("/users/" + id, { method: "DELETE" }),
   },
   locations: {
     list: () => request<{ id: string; name: string }[]>("/locations"),

@@ -6,6 +6,8 @@ export default function AdminUsers() {
   const queryClient = useQueryClient();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState<"admin" | "staff">("staff");
 
   const { data: users, isLoading } = useQuery({
@@ -24,8 +26,18 @@ export default function AdminUsers() {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => api.users.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (password !== confirmPassword) {
+      return;
+    }
     createMutation.mutate({ email: email.trim(), password, role });
   };
 
@@ -55,15 +67,39 @@ export default function AdminUsers() {
         </div>
         <div>
           <label className="block text-sm text-neutral-400 mb-1">Password (min 6 characters)</label>
+          <div className="flex gap-2">
+            <input
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={6}
+              placeholder="••••••••"
+              className="flex-1 px-4 py-3 rounded-lg bg-neutral-700 border border-neutral-600 focus:outline-none focus:ring-2 focus:ring-amber-500"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              className="px-3 py-2 rounded-lg bg-neutral-700 hover:bg-neutral-600 text-sm"
+            >
+              {showPassword ? "Hide" : "Show"}
+            </button>
+          </div>
+        </div>
+        <div>
+          <label className="block text-sm text-neutral-400 mb-1">Confirm password</label>
           <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            type={showPassword ? "text" : "password"}
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
             required
             minLength={6}
-            placeholder="••••••••"
+            placeholder="Repeat password"
             className="w-full px-4 py-3 rounded-lg bg-neutral-700 border border-neutral-600 focus:outline-none focus:ring-2 focus:ring-amber-500"
           />
+          {confirmPassword && password !== confirmPassword && (
+            <p className="text-xs text-red-400 mt-1">Passwords do not match.</p>
+          )}
         </div>
         <div>
           <label className="block text-sm text-neutral-400 mb-1">Role</label>
@@ -83,7 +119,7 @@ export default function AdminUsers() {
         )}
         <button
           type="submit"
-          disabled={createMutation.isPending}
+          disabled={createMutation.isPending || !password || password !== confirmPassword}
           className="px-4 py-3 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-50"
         >
           {createMutation.isPending ? "Creating…" : "Add user"}
@@ -102,9 +138,21 @@ export default function AdminUsers() {
                 className="p-4 rounded-xl bg-neutral-800 border border-neutral-700 flex items-center justify-between gap-2"
               >
                 <div>
-                  <span className="font-medium">{u.email}</span>
+                  <span className="font-medium break-all">{u.email}</span>
                   <span className="text-neutral-400 text-sm ml-2">({u.role})</span>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.confirm("Delete this user? This cannot be undone.")) {
+                      deleteMutation.mutate(u.id);
+                    }
+                  }}
+                  disabled={deleteMutation.isPending}
+                  className="px-3 py-2 rounded-lg bg-red-700 hover:bg-red-600 text-sm text-white disabled:opacity-50"
+                >
+                  {deleteMutation.isPending ? "Deleting…" : "Delete"}
+                </button>
               </li>
             ))}
           </ul>

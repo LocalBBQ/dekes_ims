@@ -44,3 +44,22 @@ usersRouter.post("/", async (req, res) => {
     });
     res.status(201).json(toUser(user));
 });
+usersRouter.delete("/:id", async (req, res) => {
+    const id = req.params.id;
+    const currentUser = req.user;
+    if (currentUser && currentUser.id === id) {
+        res.status(400).json({ error: "You cannot delete your own user account." });
+        return;
+    }
+    const deleted = await prisma.user
+        .delete({
+        where: { id },
+        select: { id: true },
+    })
+        .catch(() => null);
+    if (!deleted) {
+        res.status(404).json({ error: "User not found" });
+        return;
+    }
+    res.status(204).send();
+});
