@@ -1,7 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import express from "express";
-import session from "express-session";
+import cors from "cors";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -23,22 +23,26 @@ if (!isProd) {
   app.set("trust proxy", 1);
 }
 
-app.use(express.json());
+function isAllowedOrigin(origin: string | undefined): boolean {
+  if (!origin) return true;
+  if (origin === "http://localhost:5173" || origin === "http://localhost:3000") return true;
+  if (origin.endsWith(".vercel.app")) return true;
+  const extra = process.env.CORS_ORIGIN;
+  if (extra && extra.split(",").map((s) => s.trim()).filter(Boolean).includes(origin)) return true;
+  return false;
+}
 
-const sessionSecret = process.env.SESSION_SECRET || "dev-secret-change-in-production";
 app.use(
-  session({
-    secret: sessionSecret,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: isProd,
-      httpOnly: true,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      sameSite: "lax",
+  cors({
+    origin: (origin, cb) => {
+      cb(null, isAllowedOrigin(origin));
     },
+    allowedHeaders: ["Content-Type", "Authorization"],
+    methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
   })
 );
+
+app.use(express.json());
 
 // API routes
 app.use("/api/auth", authRouter);

@@ -1,4 +1,23 @@
-const base = "/api";
+const base = (import.meta as { env?: Record<string, string> }).env?.VITE_API_URL || "/api";
+
+const TOKEN_KEY = "auth_token";
+
+export function getAuthToken(): string | null {
+  try {
+    return localStorage.getItem(TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function setAuthToken(token: string | null) {
+  try {
+    if (!token) localStorage.removeItem(TOKEN_KEY);
+    else localStorage.setItem(TOKEN_KEY, token);
+  } catch {
+    // ignore
+  }
+}
 
 async function request<T>(
   path: string,
@@ -10,7 +29,8 @@ async function request<T>(
     (headers as Record<string, string>)["Content-Type"] = "application/json";
     init.body = JSON.stringify(json);
   }
-  init.credentials = "include";
+  const token = getAuthToken();
+  if (token) (headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;
   const res = await fetch(`${base}${path}`, { ...init, headers });
   if (res.status === 204) return undefined as T;
   const data = await res.json().catch(() => ({}));
@@ -21,7 +41,10 @@ async function request<T>(
 export const api = {
   auth: {
     login: (email: string, password: string) =>
-      request<{ user: { id: string; email: string; role: string; createdAt: string } }>(
+      request<{
+        token: string;
+        user: { id: string; email: string; role: string; createdAt: string };
+      }>(
         "/auth/login",
         { method: "POST", json: { email, password } }
       ),

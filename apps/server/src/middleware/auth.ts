@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
+import jwt from "jsonwebtoken";
 import { prisma } from "../lib/prisma.js";
 
 export interface SessionUser {
@@ -7,14 +8,38 @@ export interface SessionUser {
   role: string;
 }
 
-declare module "express-session" {
-  interface SessionData {
-    userId?: string;
+function getBearerToken(req: Request): string | null {
+  const raw = req.headers.authorization;
+  if (!raw) return null;
+  const [type, token] = raw.split(" ");
+  if (type !== "Bearer" || !token) return null;
+  return token;
+}
+
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (secret && secret.trim()) return secret;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("JWT_SECRET is required in production");
   }
+  return "dev-jwt-secret-change-in-production";
 }
 
 export async function requireAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
-  const userId = req.session?.userId;
+  const token = getBearerToken(req);
+  if (!token) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  let userId: string | null = null;
+  try {
+    const payload = jwt.verify(token, getJwtSecret()) as { sub?: string } | string;
+    if (typeof payload === "string") userId = null;
+    else userId = payload.sub ?? null;
+  } catch {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
     return;
@@ -24,7 +49,6 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     select: { id: true, email: true, role: true },
   });
   if (!user) {
-    req.session?.destroy(() => {});
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
