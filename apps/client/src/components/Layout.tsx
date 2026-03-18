@@ -5,7 +5,6 @@ import { useAuth } from "../contexts/AuthContext";
 const PATH_TITLES: Record<string, string> = {
   "/": "Dashboard",
   "/inventory": "Inventory",
-  "/action-items": "Action items",
   "/admin/locations": "Locations",
   "/admin/categories": "Categories",
   "/admin/users": "Users",
@@ -59,9 +58,6 @@ export default function Layout() {
       <NavLink to="/inventory" className={navClass} onClick={() => setMenuOpen(false)}>
         Inventory
       </NavLink>
-      <NavLink to="/action-items" className={navClass} onClick={() => setMenuOpen(false)}>
-        Action items
-      </NavLink>
       {user?.role === "admin" && (
         <>
           <NavLink to="/admin/locations" className={navClass} onClick={() => setMenuOpen(false)}>
@@ -85,9 +81,6 @@ export default function Layout() {
       </NavLink>
       <NavLink to="/inventory" className={navLinkMobile} onClick={() => setMenuOpen(false)}>
         Inventory
-      </NavLink>
-      <NavLink to="/action-items" className={navLinkMobile} onClick={() => setMenuOpen(false)}>
-        Action items
       </NavLink>
       {user?.role === "admin" && (
         <>

@@ -3,11 +3,6 @@ import { Link, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../contexts/AuthContext";
 import { api } from "../lib/api";
-import {
-  loadSavedActionList,
-  saveActionListToStorage,
-  type ActionItemRecord,
-} from "../lib/actionItemsStorage";
 
 const LOW_STOCK_THRESHOLD = 1;
 
@@ -25,26 +20,6 @@ export default function Dashboard() {
   const location = useLocation();
   const isAdmin = user?.role === "admin";
   const linkState = { returnTo: location.pathname || "/" };
-
-  const [actionList, setActionList] = useState<ActionItemRecord[]>(loadSavedActionList);
-  const [selectedActionIds, setSelectedActionIds] = useState<Set<string>>(new Set());
-
-  const toggleActionSelected = (id: string) => {
-    setSelectedActionIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
-  const doneSelectedActions = () => {
-    if (selectedActionIds.size === 0) return;
-    const nextList = actionList.filter((a) => !selectedActionIds.has(a.id));
-    setActionList(nextList);
-    setSelectedActionIds(new Set());
-    saveActionListToStorage(nextList);
-  };
 
   const {
     data: items,
@@ -157,94 +132,6 @@ export default function Dashboard() {
           <p className="text-2xl font-semibold text-amber-400">{lowStockCount}</p>
         </div>
       </div>
-
-      {/* Quick actions */}
-      <div>
-        <h2 className="text-sm font-medium text-neutral-400 mb-2">Quick actions</h2>
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-          <Link
-            to="/inventory"
-            className="w-full sm:w-auto px-4 py-3 rounded-lg bg-amber-600 hover:bg-amber-500 font-medium text-center"
-          >
-            View inventory
-          </Link>
-          <Link
-            to="/action-items"
-            className="w-full sm:w-auto px-4 py-3 rounded-lg bg-neutral-700 hover:bg-neutral-600 font-medium text-center"
-          >
-            Action items
-          </Link>
-          {isAdmin && (
-            <Link
-              to="/inventory/new"
-              className="w-full sm:w-auto px-4 py-3 rounded-lg bg-neutral-700 hover:bg-neutral-600 font-medium text-center"
-            >
-              Add item
-            </Link>
-          )}
-        </div>
-      </div>
-
-      {/* Current action items */}
-      <section className="rounded-xl bg-neutral-800 border border-neutral-700 overflow-hidden">
-        <div className="p-4 border-b border-neutral-700 flex items-center justify-between gap-3 flex-wrap">
-          <h2 className="text-sm font-medium text-neutral-400">Action items</h2>
-          <Link
-            to="/action-items"
-            className="text-sm font-medium text-amber-500 hover:text-amber-400 whitespace-nowrap"
-          >
-            Manage action items
-          </Link>
-        </div>
-        <div className="max-h-56 overflow-y-auto">
-          {actionList.length === 0 ? (
-            <p className="p-4 text-neutral-500 text-sm">No action items. Add moves on the Action items page.</p>
-          ) : (
-            <>
-              <ul className="divide-y divide-neutral-700/80">
-                {actionList.map((a) => (
-                  <li
-                    key={a.id}
-                    className={`flex flex-wrap items-center gap-x-3 gap-y-1 p-3 text-sm min-w-0 ${
-                      selectedActionIds.has(a.id)
-                        ? "bg-amber-900/20"
-                        : "hover:bg-neutral-700/30"
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedActionIds.has(a.id)}
-                      onChange={() => toggleActionSelected(a.id)}
-                      className="rounded border-neutral-500 bg-neutral-800 text-amber-600 focus:ring-amber-500 shrink-0"
-                      aria-label={`Select ${a.itemName}`}
-                    />
-                    <span className="font-medium text-neutral-200 min-w-0 truncate">{a.itemName}</span>
-                    <span className="text-neutral-500 shrink-0">× {a.quantity}</span>
-                    <span className="text-neutral-400 text-xs sm:text-sm w-full sm:w-auto min-w-0">
-                      {a.fromLocationName} → {a.toLocationName}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-              <div className="p-3 border-t border-neutral-700/80 flex flex-col gap-2 sm:flex-row sm:items-center">
-                <button
-                  type="button"
-                  onClick={doneSelectedActions}
-                  disabled={selectedActionIds.size === 0}
-                  className="w-full sm:w-auto px-4 py-3 sm:py-2 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
-                >
-                  Done
-                </button>
-                <span className="text-neutral-500 text-sm py-1 sm:py-2">
-                  {selectedActionIds.size > 0
-                    ? `${selectedActionIds.size} selected`
-                    : "Select items and click Done to clear them"}
-                </span>
-              </div>
-            </>
-          )}
-        </div>
-      </section>
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Out of stock list */}

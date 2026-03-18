@@ -5,7 +5,6 @@ import Dashboard from "./pages/Dashboard";
 import InventoryList from "./pages/InventoryList";
 import InventoryItem from "./pages/InventoryItem";
 import ProductDescription from "./pages/ProductDescription";
-import ActionItems from "./pages/ActionItems";
 import AdminLocations from "./pages/admin/AdminLocations";
 import AdminCategories from "./pages/admin/AdminCategories";
 import AdminUsers from "./pages/admin/AdminUsers";
@@ -50,7 +49,6 @@ export default function App() {
           }
         />
         <Route path="inventory/:id" element={<ProductDescription />} />
-        <Route path="action-items" element={<ActionItems />} />
         <Route
           path="admin/locations"
           element={
