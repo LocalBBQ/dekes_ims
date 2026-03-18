@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  role         String   // "admin" | "staff"
+  createdAt    DateTime @default(now())
+}
+
+model Location {
+  id                    String                 @id @default(cuid())
+  name                  String
+  itemLocationQuantities ItemLocationQuantity[]
+}
+
+model Category {
+  id             String          @id @default(cuid())
+  name           String
+  inventoryItems InventoryItem[]
+}
+
+model FieldDefinition {
+  id              String            @id @default(cuid())
+  name            String
+  type            String            // text, number, date, select, image
+  options         String?           // JSON array for select
+  sortOrder       Int               @default(0)
+  itemFieldValues ItemFieldValue[]
+  itemImages      ItemImage[]
+}
+
+model InventoryItem {
+  id                    String                 @id @default(cuid())
+  name                  String
+  description           String?
+  categoryId            String?
+  category              Category?              @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  lastOrderAt           DateTime?
+  reorderLink           String?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  itemFieldValues       ItemFieldValue[]
+  itemImages            ItemImage[]
+  itemLocationQuantities ItemLocationQuantity[]
+}
+
+model ItemLocationQuantity {
+  itemId        String
+  locationId    String
+  quantity      Float            @default(0)  // sealed
+  quantityInUse Float            @default(0) // open / in use
+  item          InventoryItem    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  location      Location         @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  @@id([itemId, locationId])
+}
+
+model ItemFieldValue {
+  itemId            String
+  fieldDefinitionId String
+  value             String?          // store as string; parse by field type
+  item              InventoryItem    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  fieldDefinition   FieldDefinition  @relation(fields: [fieldDefinitionId], references: [id], onDelete: Cascade)
+  @@id([itemId, fieldDefinitionId])
+}
+
+model ItemImage {
+  id                 String          @id @default(cuid())
+  itemId             String
+  fieldDefinitionId  String?
+  filePathOrUrl      String
+  createdAt          DateTime        @default(now())
+  item               InventoryItem   @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  fieldDefinition    FieldDefinition? @relation(fields: [fieldDefinitionId], references: [id], onDelete: SetNull)
+}

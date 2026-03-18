@@ -1,0 +1,11 @@
+{
+  "build": {
+    "builder": "NIXPACKS"
+  },
+  "deploy": {
+    "startCommand": "npm run start",
+    "healthcheckPath": "/api/auth/me",
+    "restartPolicyType": "ON_FAILURE"
+  }
+}
+

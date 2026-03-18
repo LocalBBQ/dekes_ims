@@ -1,0 +1,211 @@
+import { useState, useEffect } from "react";
+import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+
+const PATH_TITLES: Record<string, string> = {
+  "/": "Dashboard",
+  "/inventory": "Inventory",
+  "/action-items": "Action items",
+  "/admin/locations": "Locations",
+  "/admin/categories": "Categories",
+  "/admin/users": "Users",
+};
+
+function getPageTitle(pathname: string): string {
+  if (pathname === "/" || pathname === "") return "Dashboard";
+  if (pathname === "/inventory/new") return "New item";
+  if (/^\/inventory\/[^/]+\/edit$/.test(pathname)) return "Edit item";
+  if (/^\/inventory\/[^/]+$/.test(pathname)) return "Item";
+  for (const path of Object.keys(PATH_TITLES)) {
+    if (pathname === path || pathname.startsWith(path + "/")) return PATH_TITLES[path];
+  }
+  return "Menu";
+}
+
+export default function Layout() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const pageTitle = getPageTitle(location.pathname);
+
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (!menuOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [menuOpen]);
+
+  const handleLogout = async () => {
+    setMenuOpen(false);
+    await logout();
+    navigate("/login");
+  };
+
+  const navClass = ({ isActive }: { isActive: boolean }) =>
+    `block px-4 py-3 rounded-lg text-sm font-medium transition ${isActive ? "bg-neutral-700 text-white" : "text-neutral-300 hover:bg-neutral-800"}`;
+
+  const navLinkMobile = ({ isActive }: { isActive: boolean }) =>
+    `block w-full text-left px-4 py-3.5 rounded-xl text-base font-medium transition ${isActive ? "bg-neutral-700 text-white" : "text-neutral-200 hover:bg-neutral-700/80 active:bg-neutral-600"}`;
+
+  const mainLinks = (
+    <>
+      <NavLink to="/" end className={navClass} onClick={() => setMenuOpen(false)}>
+        Dashboard
+      </NavLink>
+      <NavLink to="/inventory" className={navClass} onClick={() => setMenuOpen(false)}>
+        Inventory
+      </NavLink>
+      <NavLink to="/action-items" className={navClass} onClick={() => setMenuOpen(false)}>
+        Action items
+      </NavLink>
+      {user?.role === "admin" && (
+        <>
+          <NavLink to="/admin/locations" className={navClass} onClick={() => setMenuOpen(false)}>
+            Locations
+          </NavLink>
+          <NavLink to="/admin/categories" className={navClass} onClick={() => setMenuOpen(false)}>
+            Categories
+          </NavLink>
+          <NavLink to="/admin/users" className={navClass} onClick={() => setMenuOpen(false)}>
+            Users
+          </NavLink>
+        </>
+      )}
+    </>
+  );
+
+  const mainLinksMobile = (
+    <>
+      <NavLink to="/" end className={navLinkMobile} onClick={() => setMenuOpen(false)}>
+        Dashboard
+      </NavLink>
+      <NavLink to="/inventory" className={navLinkMobile} onClick={() => setMenuOpen(false)}>
+        Inventory
+      </NavLink>
+      <NavLink to="/action-items" className={navLinkMobile} onClick={() => setMenuOpen(false)}>
+        Action items
+      </NavLink>
+      {user?.role === "admin" && (
+        <>
+          <NavLink to="/admin/locations" className={navLinkMobile} onClick={() => setMenuOpen(false)}>
+            Locations
+          </NavLink>
+          <NavLink to="/admin/categories" className={navLinkMobile} onClick={() => setMenuOpen(false)}>
+            Categories
+          </NavLink>
+          <NavLink to="/admin/users" className={navLinkMobile} onClick={() => setMenuOpen(false)}>
+            Users
+          </NavLink>
+        </>
+      )}
+    </>
+  );
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      <header className="sticky top-0 z-20 bg-neutral-800 border-b border-neutral-700 px-3 py-2.5 sm:px-4 sm:py-3 flex items-center justify-between gap-2 min-h-[52px] safe-area-inset-top">
+        {/* Mobile: hamburger + title */}
+        <div className="flex items-center gap-2 min-w-0">
+          <button
+            type="button"
+            onClick={() => setMenuOpen((o) => !o)}
+            className="shrink-0 p-2 -ml-1 rounded-lg text-neutral-300 hover:bg-neutral-700 hover:text-white transition lg:hidden"
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={menuOpen}
+          >
+            <span className="sr-only">{menuOpen ? "Close menu" : "Open menu"}</span>
+            <svg
+              className="w-6 h-6 transition-transform"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+              aria-hidden
+            >
+              {menuOpen ? (
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              ) : (
+                <>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                </>
+              )}
+            </svg>
+          </button>
+          <span className="text-neutral-100 font-semibold truncate lg:hidden">{pageTitle}</span>
+        </div>
+
+        {/* Desktop: full nav */}
+        <nav className="hidden lg:flex items-center gap-1 flex-wrap">{mainLinks}</nav>
+
+        {/* Right: user + logout — compact on mobile */}
+        <div className="flex items-center gap-1 sm:gap-2 min-w-0 shrink-0">
+          <span className="hidden sm:inline text-neutral-400 text-sm truncate max-w-[140px]">{user?.email}</span>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="px-2.5 py-2 sm:px-3 sm:py-2 rounded-lg bg-neutral-700 hover:bg-neutral-600 text-sm font-medium shrink-0"
+          >
+            Log out
+          </button>
+        </div>
+      </header>
+
+      {/* Mobile slide-out overlay */}
+      <div
+        className="fixed inset-0 z-10 bg-black/40 backdrop-blur-md lg:hidden transition-opacity duration-300 ease-out"
+        style={{
+          opacity: menuOpen ? 1 : 0,
+          pointerEvents: menuOpen ? "auto" : "none",
+          visibility: menuOpen ? "visible" : "hidden",
+        }}
+        onClick={() => setMenuOpen(false)}
+        aria-hidden
+      />
+
+      {/* Mobile slide-out panel */}
+      <aside
+        className="fixed top-0 left-0 z-20 h-full w-[min(300px,88vw)] max-w-full bg-neutral-800/95 border-r border-neutral-700/80 shadow-2xl lg:hidden flex flex-col transition-[transform] duration-300 ease-out"
+        style={{ transform: menuOpen ? "translateX(0)" : "translateX(-100%)" }}
+        aria-modal="true"
+        aria-label="Main navigation"
+      >
+        <div className="flex items-center justify-between px-4 py-3.5 border-b border-neutral-700/80 shrink-0 safe-area-inset-top">
+          <span className="font-semibold text-neutral-100 tracking-tight">Menu</span>
+          <button
+            type="button"
+            onClick={() => setMenuOpen(false)}
+            className="p-2.5 -mr-1 rounded-xl text-neutral-400 hover:bg-neutral-700 hover:text-white transition-colors"
+            aria-label="Close menu"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <nav className="flex-1 overflow-y-auto overscroll-contain p-3 flex flex-col gap-0.5 py-4">
+          {mainLinksMobile}
+        </nav>
+        <div className="p-3 pt-2 border-t border-neutral-700/80 space-y-2 safe-area-inset-bottom">
+          <p className="px-4 py-2 text-neutral-400 text-sm truncate" title={user?.email ?? undefined}>
+            {user?.email}
+          </p>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="w-full px-4 py-3.5 rounded-xl bg-neutral-700 hover:bg-neutral-600 active:bg-neutral-500 text-sm font-medium transition-colors"
+          >
+            Log out
+          </button>
+        </div>
+      </aside>
+
+      <main className="flex-1 p-4 pb-8 safe-area-inset-bottom">
+        <Outlet />
+      </main>
+    </div>
+  );
+}
