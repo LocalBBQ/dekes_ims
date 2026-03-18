@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../contexts/AuthContext";
@@ -16,9 +15,7 @@ function formatDate(iso: string | null): string {
 }
 
 export default function Dashboard() {
-  const { user } = useAuth();
   const location = useLocation();
-  const isAdmin = user?.role === "admin";
   const linkState = { returnTo: location.pathname || "/" };
 
   const {
