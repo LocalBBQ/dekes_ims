@@ -19,7 +19,8 @@ const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 const isProd = process.env.NODE_ENV === "production";
 
-if (!isProd) {
+// Behind Render / other reverse proxies, trust X-Forwarded-* (must be set in production)
+if (isProd) {
   app.set("trust proxy", 1);
 }
 
@@ -27,6 +28,7 @@ function isAllowedOrigin(origin: string | undefined): boolean {
   if (!origin) return true;
   if (origin === "http://localhost:5173" || origin === "http://localhost:3000") return true;
   if (origin.endsWith(".vercel.app")) return true;
+  if (origin.endsWith(".onrender.com")) return true;
   const extra = process.env.CORS_ORIGIN;
   if (extra && extra.split(",").map((s) => s.trim()).filter(Boolean).includes(origin)) return true;
   return false;
@@ -64,9 +66,13 @@ if (isProd) {
 }
 
 const HOST = process.env.HOST ?? "0.0.0.0";
-app.listen(PORT, HOST, () => {
-  console.log(`Server listening on http://localhost:${PORT}`);
+const server = app.listen(PORT, HOST, () => {
+  console.log(`Server listening on http://${HOST}:${PORT}`);
   if (HOST === "0.0.0.0") {
     console.log("  (reachable from other devices on your network)");
   }
+});
+server.on("error", (err: NodeJS.ErrnoException) => {
+  console.error("Server failed to start:", err);
+  process.exit(1);
 });

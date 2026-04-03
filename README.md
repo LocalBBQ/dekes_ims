@@ -42,3 +42,14 @@ npm run start
 ```
 
 Serves API and static client on one host. Use HTTPS so "Add to Home Screen" works on iPhone.
+
+### Render (or similar)
+
+1. **Build command** (repo root): `npm install && npm run build`
+2. **Start command** (repo root): `npm start`  
+   The server runs `prisma migrate deploy` automatically before `node dist/index.js` so new migrations (e.g. Shop tasks) apply on deploy.
+3. **Environment variables** (required in the dashboard):
+   - `DATABASE_URL` — Postgres connection string
+   - `JWT_SECRET` — long random string (required in production for login)
+   - `NODE_ENV` — `production`
+4. If `prestart` / `prisma migrate deploy` fails, check deploy logs: usually missing `DATABASE_URL`, DB unreachable, or migration conflict. The real error appears **above** the generic `npm error Lifecycle script start failed` line.
