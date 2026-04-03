@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import ConfirmDialog from "../../components/ConfirmDialog";
 import { api } from "../../lib/api";
 
 export default function AdminUsers() {
   const queryClient = useQueryClient();
+  const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -30,6 +32,7 @@ export default function AdminUsers() {
     mutationFn: (id: string) => api.users.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
+      setDeleteUserId(null);
     },
   });
 
@@ -117,13 +120,15 @@ export default function AdminUsers() {
             {createMutation.error instanceof Error ? createMutation.error.message : "Failed to create user"}
           </p>
         )}
-        <button
-          type="submit"
-          disabled={createMutation.isPending || !password || password !== confirmPassword}
-          className="px-4 py-3 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-50"
-        >
-          {createMutation.isPending ? "Creating…" : "Add user"}
-        </button>
+        <div className="mt-4 border-t border-neutral-700/80 pt-4 flex flex-col sm:flex-row sm:justify-end">
+          <button
+            type="submit"
+            disabled={createMutation.isPending || !password || password !== confirmPassword}
+            className="form-actions-primary px-4 py-3 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-50"
+          >
+            {createMutation.isPending ? "Creating…" : "Add user"}
+          </button>
+        </div>
       </form>
 
       {isLoading ? (
@@ -143,11 +148,7 @@ export default function AdminUsers() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => {
-                    if (window.confirm("Delete this user? This cannot be undone.")) {
-                      deleteMutation.mutate(u.id);
-                    }
-                  }}
+                  onClick={() => setDeleteUserId(u.id)}
                   disabled={deleteMutation.isPending}
                   className="px-3 py-2 rounded-lg bg-red-700 hover:bg-red-600 text-sm text-white disabled:opacity-50"
                 >
@@ -158,6 +159,20 @@ export default function AdminUsers() {
           </ul>
         </div>
       )}
+
+      <ConfirmDialog
+        open={deleteUserId != null}
+        title="Delete user?"
+        description="This account will be removed. The person will no longer be able to sign in."
+        confirmLabel="Delete user"
+        cancelLabel="Cancel"
+        destructive
+        loading={deleteMutation.isPending}
+        onCancel={() => setDeleteUserId(null)}
+        onConfirm={() => {
+          if (deleteUserId) deleteMutation.mutate(deleteUserId);
+        }}
+      />
     </div>
   );
 }

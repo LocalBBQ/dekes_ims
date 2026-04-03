@@ -178,15 +178,15 @@ export default function AdminFields() {
                     onChange={(e) => setForm((x) => ({ ...x, sortOrder: Number(e.target.value) }))}
                     className="w-16 px-3 py-2 rounded-lg bg-neutral-700 border border-neutral-600"
                   />
-                  <button type="submit" className="px-3 py-2 rounded-lg bg-amber-600 hover:bg-amber-500">
-                    Save
-                  </button>
                   <button
                     type="button"
                     onClick={() => setEditingId(null)}
                     className="px-3 py-2 rounded-lg bg-neutral-600 hover:bg-neutral-500"
                   >
                     Cancel
+                  </button>
+                  <button type="submit" className="px-3 py-2 rounded-lg bg-amber-600 hover:bg-amber-500">
+                    Save
                   </button>
                 </form>
               ) : (

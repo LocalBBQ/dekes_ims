@@ -2,6 +2,35 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Button groups: primary right, secondary left (LTR); destructive separated below form row */
+@layer components {
+  .form-actions {
+    @apply mt-6 border-t border-neutral-700/80 pt-6;
+  }
+  .form-actions-row {
+    @apply flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4;
+  }
+  .form-actions-primary {
+    @apply w-full sm:w-auto sm:min-w-[9rem] shrink-0;
+  }
+  .form-actions-secondary {
+    @apply w-full sm:w-auto shrink-0;
+  }
+  .form-actions-destructive {
+    @apply mt-4 border-t border-neutral-700/80 pt-4;
+  }
+  .page-toolbar {
+    @apply flex flex-wrap items-center justify-between gap-2;
+  }
+  .page-toolbar-end {
+    @apply flex flex-wrap items-center justify-end gap-2;
+  }
+  /* Modal / confirm: cancel left of confirm when grouped at end (LTR) */
+  .dialog-actions {
+    @apply mt-6 flex flex-col gap-2 sm:flex-row sm:justify-end sm:gap-3;
+  }
+}
+
 body {
   @apply bg-neutral-900 text-neutral-100 antialiased min-h-screen;
   -webkit-tap-highlight-color: transparent;

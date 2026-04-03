@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import ConfirmDialog from "../../components/ConfirmDialog";
 import { api } from "../../lib/api";
 
 export default function AdminCategories() {
@@ -7,6 +8,7 @@ export default function AdminCategories() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [newName, setNewName] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
   const { data: categories, isLoading } = useQuery({
     queryKey: ["categories"],
@@ -31,7 +33,10 @@ export default function AdminCategories() {
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.categories.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["categories"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      setDeleteTarget(null);
+    },
   });
 
   const startEdit = (cat: { id: string; name: string }) => {
@@ -45,12 +50,17 @@ export default function AdminCategories() {
       <p className="text-neutral-400 text-sm">
         Manage categories for inventory items (e.g. Beverages, Food, Supplies).
       </p>
-      <div className="flex flex-wrap items-end gap-2 max-w-md">
+      <div className="flex flex-col gap-2 max-w-md">
+        <label htmlFor="new-category-name" className="text-sm text-neutral-400">
+          New category
+        </label>
+        <div className="flex flex-wrap items-end gap-2">
         <input
+          id="new-category-name"
           type="text"
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
-          placeholder="New category name"
+          placeholder="e.g. Beverages"
           className="flex-1 min-w-[180px] px-4 py-2 rounded-lg bg-neutral-800 border border-neutral-600 focus:outline-none focus:ring-2 focus:ring-amber-500"
         />
         <button
@@ -64,6 +74,7 @@ export default function AdminCategories() {
         >
           Add
         </button>
+        </div>
       </div>
       {isLoading ? (
         <p className="text-neutral-400">Loading…</p>
@@ -72,7 +83,7 @@ export default function AdminCategories() {
           {categories?.map((cat) => (
             <li
               key={cat.id}
-              className="p-4 rounded-xl bg-neutral-800 border border-neutral-700 flex items-center justify-between gap-2"
+              className="p-4 rounded-xl bg-neutral-800 border border-neutral-700 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
             >
               {editingId === cat.id ? (
                 <>
@@ -80,23 +91,25 @@ export default function AdminCategories() {
                     type="text"
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
-                    className="flex-1 px-4 py-2 rounded-lg bg-neutral-700 border border-neutral-600 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full sm:flex-1 min-w-0 px-4 py-2 rounded-lg bg-neutral-700 border border-neutral-600 focus:outline-none focus:ring-2 focus:ring-amber-500"
                   />
-                  <button
-                    type="button"
-                    onClick={() => updateMutation.mutate({ id: cat.id, name: editName.trim() })}
-                    disabled={!editName.trim() || updateMutation.isPending}
-                    className="px-3 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-50"
-                  >
-                    Save
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setEditingId(null)}
-                    className="px-3 py-2 rounded-lg bg-neutral-600 hover:bg-neutral-500"
-                  >
-                    Cancel
-                  </button>
+                  <div className="flex shrink-0 justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setEditingId(null)}
+                      className="px-3 py-2 rounded-lg bg-neutral-600 hover:bg-neutral-500"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => updateMutation.mutate({ id: cat.id, name: editName.trim() })}
+                      disabled={!editName.trim() || updateMutation.isPending}
+                      className="px-3 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-50"
+                    >
+                      Save
+                    </button>
+                  </div>
                 </>
               ) : (
                 <>
@@ -111,15 +124,7 @@ export default function AdminCategories() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => {
-                        if (
-                          window.confirm(
-                            `Delete category "${cat.name}"? This cannot be undone.`
-                          )
-                        ) {
-                          deleteMutation.mutate(cat.id);
-                        }
-                      }}
+                      onClick={() => setDeleteTarget({ id: cat.id, name: cat.name })}
                       disabled={deleteMutation.isPending}
                       className="px-3 py-2 rounded-lg bg-red-800/60 hover:bg-red-700/60 text-sm disabled:opacity-50"
                     >
@@ -132,6 +137,24 @@ export default function AdminCategories() {
           ))}
         </ul>
       )}
+
+      <ConfirmDialog
+        open={deleteTarget != null}
+        title="Delete category?"
+        description={
+          deleteTarget
+            ? `Delete "${deleteTarget.name}" from categories? Items may lose this category label. This cannot be undone.`
+            : ""
+        }
+        confirmLabel="Delete category"
+        cancelLabel="Cancel"
+        destructive
+        loading={deleteMutation.isPending}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={() => {
+          if (deleteTarget) deleteMutation.mutate(deleteTarget.id);
+        }}
+      />
     </div>
   );
 }

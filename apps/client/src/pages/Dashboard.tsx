@@ -216,7 +216,7 @@ export default function Dashboard() {
                         </Link>
                       )}
                     </td>
-                    <td className="p-3 text-neutral-400 text-sm">{count}</td>
+                    <td className="p-3 text-right text-neutral-400 text-sm tabular-nums">{count}</td>
                   </tr>
                 ))}
               </tbody>
@@ -244,7 +244,7 @@ export default function Dashboard() {
             <thead>
               <tr className="border-b border-neutral-700/80">
                 <th className="p-3 font-medium text-sm">Item</th>
-                <th className="p-3 font-medium text-neutral-400 text-sm">Quantities</th>
+                <th className="p-3 font-medium text-neutral-400 text-sm text-right">Quantities</th>
                 <th className="p-3 font-medium text-neutral-400 text-sm">Updated</th>
               </tr>
             </thead>
@@ -267,7 +267,7 @@ export default function Dashboard() {
                         {item.name}
                       </Link>
                     </td>
-                    <td className="p-3 text-neutral-300 text-sm">
+                    <td className="p-3 text-neutral-300 text-sm text-right tabular-nums">
                       {item.quantities.reduce(
                         (sum, q) => sum + (q.quantity ?? 0) + (q.quantityInUse ?? 0),
                         0

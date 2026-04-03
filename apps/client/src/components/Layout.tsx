@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
+import { Link, Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 
 const PATH_TITLES: Record<string, string> = {
@@ -21,12 +21,37 @@ function getPageTitle(pathname: string): string {
   return "Menu";
 }
 
+/** Parent route for legacy-style header Back; respects location.state.returnTo when safe */
+function getBackTarget(pathname: string, state: unknown): string | null {
+  if (pathname === "/" || pathname === "") return null;
+
+  const safeReturn = (r: unknown): string | null =>
+    typeof r === "string" && r.startsWith("/") && !r.startsWith("//") ? r : null;
+
+  if (pathname === "/inventory") return "/";
+  if (pathname === "/inventory/new") return "/inventory";
+
+  const editMatch = pathname.match(/^\/inventory\/([^/]+)\/edit$/);
+  if (editMatch) return `/inventory/${editMatch[1]}`;
+
+  if (/^\/inventory\/[^/]+$/.test(pathname)) {
+    const rt = safeReturn((state as { returnTo?: string } | null)?.returnTo);
+    if (rt) return rt;
+    return "/inventory";
+  }
+
+  if (pathname.startsWith("/admin/")) return "/";
+
+  return "/";
+}
+
 export default function Layout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const pageTitle = getPageTitle(location.pathname);
+  const backTarget = getBackTarget(location.pathname, location.state);
 
   // Lock body scroll when mobile menu is open
   useEffect(() => {
@@ -99,14 +124,32 @@ export default function Layout() {
   );
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="relative min-h-screen flex flex-col">
+      <a
+        href="#main-content"
+        className="absolute left-4 top-0 z-[100] -translate-y-full rounded-lg bg-amber-600 px-4 py-3 font-medium text-neutral-900 shadow-lg transition-transform focus:translate-y-4 focus:outline-none focus:ring-2 focus:ring-white"
+      >
+        Skip to main content
+      </a>
       <header className="sticky top-0 z-20 bg-neutral-800 border-b border-neutral-700 px-3 py-2.5 sm:px-4 sm:py-3 flex items-center justify-between gap-2 min-h-[52px] safe-area-inset-top">
-        {/* Mobile: hamburger + title */}
-        <div className="flex items-center gap-2 min-w-0">
+        {/* Left: Back (non-dashboard) + mobile menu + title */}
+        <div className="flex items-center gap-1 sm:gap-2 min-w-0 flex-1">
+          {backTarget != null && (
+            <Link
+              to={backTarget}
+              onClick={() => setMenuOpen(false)}
+              className="inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-2 text-sm font-medium text-neutral-200 hover:bg-neutral-700 hover:text-white transition sm:gap-1.5 sm:px-3"
+            >
+              <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+              <span className="whitespace-nowrap">Back</span>
+            </Link>
+          )}
           <button
             type="button"
             onClick={() => setMenuOpen((o) => !o)}
-            className="shrink-0 p-2 -ml-1 rounded-lg text-neutral-300 hover:bg-neutral-700 hover:text-white transition lg:hidden"
+            className="shrink-0 p-2 -ml-0.5 rounded-lg text-neutral-300 hover:bg-neutral-700 hover:text-white transition lg:hidden"
             aria-label={menuOpen ? "Close menu" : "Open menu"}
             aria-expanded={menuOpen}
           >
@@ -128,7 +171,7 @@ export default function Layout() {
               )}
             </svg>
           </button>
-          <span className="text-neutral-100 font-semibold truncate lg:hidden">{pageTitle}</span>
+          <span className="text-neutral-100 font-semibold truncate min-w-0 lg:hidden">{pageTitle}</span>
         </div>
 
         {/* Desktop: full nav */}
@@ -196,7 +239,11 @@ export default function Layout() {
         </div>
       </aside>
 
-      <main className="flex-1 p-4 pb-8 safe-area-inset-bottom">
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="flex-1 p-4 pb-8 safe-area-inset-bottom outline-none"
+      >
         <Outlet />
       </main>
     </div>

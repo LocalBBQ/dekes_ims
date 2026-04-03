@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../contexts/AuthContext";
+import ConfirmDialog from "../components/ConfirmDialog";
 import { api } from "../lib/api";
 
 type QuantityAtLocationForm = { quantity: number; quantityInUse: number };
@@ -53,6 +54,7 @@ export default function InventoryItemPage() {
   });
 
   const [form, setForm] = useState<ItemForm>(emptyForm);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   useEffect(() => {
     if (isNew && locations?.length) {
@@ -104,22 +106,8 @@ export default function InventoryItemPage() {
     mutationFn: () => api.inventory.delete(id!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["inventory"] });
+      setDeleteOpen(false);
       goBackAfterSave();
-    },
-  });
-  const updateQuantityMutation = useMutation({
-    mutationFn: ({
-      locId,
-      quantity,
-      quantityInUse,
-    }: {
-      locId: string;
-      quantity?: number;
-      quantityInUse?: number;
-    }) => api.inventory.updateQuantity(id!, locId, { quantity, quantityInUse }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["inventory"] });
-      queryClient.invalidateQueries({ queryKey: ["inventory", id] });
     },
   });
   const handleSubmit = (e: React.FormEvent) => {
@@ -144,16 +132,25 @@ export default function InventoryItemPage() {
 
   const saving = createMutation.isPending || updateMutation.isPending;
   const deleting = deleteMutation.isPending;
-  const error = createMutation.error || updateMutation.error || deleteMutation.error
-    || updateQuantityMutation.error;
+  const error = createMutation.error || updateMutation.error || deleteMutation.error;
 
-  if (!isNew && isLoading) return <p className="text-neutral-400">Loading…</p>;
+  if (!isNew && isLoading) {
+    return (
+      <div className="space-y-6 max-w-lg animate-pulse">
+        <div className="h-8 w-40 bg-neutral-800 rounded-lg" />
+        <div className="h-10 w-full bg-neutral-800 rounded-lg" />
+        <div className="h-24 w-full bg-neutral-800 rounded-lg" />
+        <div className="h-10 w-full bg-neutral-800 rounded-lg" />
+        <div className="h-10 w-32 bg-neutral-800 rounded-lg" />
+      </div>
+    );
+  }
   if (!locations?.length) return <p className="text-neutral-400">No locations. Add one in Admin → Locations.</p>;
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-        <div className="min-w-0">
+      <div className="page-toolbar">
+        <div className="min-w-0 sm:flex-1">
           <h1 className="text-xl font-semibold">{isNew ? "New item" : "Edit item"}</h1>
           {!isNew && item?.updatedAt && (
             <p className="text-sm text-neutral-500 mt-0.5">
@@ -166,7 +163,7 @@ export default function InventoryItemPage() {
             href={item.reorderLink}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-3 rounded-lg bg-amber-600 hover:bg-amber-500 font-medium"
+            className="form-actions-secondary inline-flex items-center justify-center px-4 py-3 rounded-lg border border-neutral-600 bg-neutral-800 hover:bg-neutral-700 font-medium text-neutral-200"
           >
             Purchase / Order
           </a>
@@ -297,39 +294,49 @@ export default function InventoryItemPage() {
         {error && (
           <p className="text-red-400 text-sm">{error instanceof Error ? error.message : "Error"}</p>
         )}
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-          <button
-            type="submit"
-            disabled={saving}
-            className="w-full sm:w-auto px-4 py-3 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-50 font-medium"
-          >
-            {saving ? "Saving…" : isNew ? "Create" : "Save"}
-          </button>
+        <div className="form-actions">
+          <div className="form-actions-row">
+            <button
+              type="button"
+              onClick={goBackAfterSave}
+              className="form-actions-secondary px-4 py-3 rounded-lg bg-neutral-700 hover:bg-neutral-600 font-medium"
+            >
+              Go back
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="form-actions-primary px-4 py-3 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-50 font-medium"
+            >
+              {saving ? "Saving…" : isNew ? "Create item" : "Save changes"}
+            </button>
+          </div>
           {!isNew && (
-            <>
+            <div className="form-actions-destructive">
               <button
                 type="button"
-                onClick={goBackAfterSave}
-                className="w-full sm:w-auto px-4 py-3 rounded-lg bg-neutral-700 hover:bg-neutral-600"
-              >
-                Back
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (window.confirm("Delete this item? This cannot be undone.")) {
-                    deleteMutation.mutate();
-                  }
-                }}
+                onClick={() => setDeleteOpen(true)}
                 disabled={deleting}
-                className="w-full sm:w-auto px-4 py-3 rounded-lg bg-red-700 hover:bg-red-600 disabled:opacity-50 text-white"
+                className="w-full max-w-xs px-4 py-3 rounded-lg bg-red-800/80 hover:bg-red-700 disabled:opacity-50 text-white font-medium sm:w-auto"
               >
-                {deleting ? "Deleting…" : "Delete item"}
+                Delete item
               </button>
-            </>
+            </div>
           )}
         </div>
       </form>
+
+      <ConfirmDialog
+        open={deleteOpen}
+        title="Delete this item?"
+        description="This will remove the item from inventory. This action cannot be undone."
+        confirmLabel="Delete item"
+        cancelLabel="Cancel"
+        destructive
+        loading={deleting}
+        onCancel={() => setDeleteOpen(false)}
+        onConfirm={() => deleteMutation.mutate()}
+      />
     </div>
   );
 }

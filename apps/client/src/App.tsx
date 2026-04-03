@@ -12,7 +12,17 @@ import Layout from "./components/Layout";
 
 function ProtectedRoute({ children, adminOnly }: { children: React.ReactNode; adminOnly?: boolean }) {
   const { user, loading } = useAuth();
-  if (loading) return <div className="p-6 text-center">Loading...</div>;
+  if (loading) {
+    return (
+      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 p-6">
+        <div
+          className="h-9 w-9 animate-spin rounded-full border-2 border-neutral-600 border-t-amber-500"
+          aria-hidden
+        />
+        <p className="text-sm text-neutral-400">Loading…</p>
+      </div>
+    );
+  }
   if (!user) return <Navigate to="/login" replace />;
   if (adminOnly && user.role !== "admin") return <Navigate to="/" replace />;
   return <>{children}</>;

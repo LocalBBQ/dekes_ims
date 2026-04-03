@@ -122,12 +122,25 @@ export default function ProductDescription() {
   };
 
   if (!id) return <p className="text-neutral-400">No item selected.</p>;
-  if (isLoading) return <p className="text-neutral-400">Loading…</p>;
+  if (isLoading) {
+    return (
+      <div className="space-y-6 max-w-2xl animate-pulse">
+        <div className="h-8 w-2/3 max-w-md bg-neutral-800 rounded-lg" />
+        <div className="h-4 w-40 bg-neutral-800 rounded" />
+        <div className="h-40 rounded-xl bg-neutral-800 border border-neutral-700" />
+        <div className="h-32 rounded-xl bg-neutral-800 border border-neutral-700" />
+      </div>
+    );
+  }
   if (!item) return <p className="text-neutral-400">Item not found.</p>;
+
+  const editLinkClass = hasPendingChanges
+    ? "w-full sm:w-auto px-4 py-3 rounded-lg border border-neutral-500 text-neutral-200 hover:bg-neutral-700 font-medium text-center"
+    : "w-full sm:w-auto px-4 py-3 rounded-lg bg-amber-600 hover:bg-amber-500 font-medium text-center";
 
   return (
     <div className="space-y-6 max-w-2xl">
-      <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
         <div className="min-w-0">
           <h1 className="text-xl font-semibold break-words">{item.name}</h1>
           {item.updatedAt && (
@@ -136,42 +149,48 @@ export default function ProductDescription() {
             </p>
           )}
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-          {hasPendingChanges && (
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={saveMutation.isPending}
-              className="w-full sm:w-auto px-4 py-3 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-50 font-medium"
-            >
-              {saveMutation.isPending ? "Saving…" : "Save changes"}
-            </button>
-          )}
-          {isAdmin && (
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:max-w-xl">
+          <div className="page-toolbar">
             <Link
-              to={`/inventory/${id}/edit`}
-              state={{ returnTo: `/inventory/${id}` }}
-              className="w-full sm:w-auto px-4 py-3 rounded-lg bg-amber-600 hover:bg-amber-500 font-medium text-center"
+              to="/inventory"
+              className="form-actions-secondary px-4 py-3 rounded-lg bg-neutral-700 hover:bg-neutral-600 text-center"
             >
-              Edit
+              Back to list
             </Link>
+            <div className="page-toolbar-end flex-1 sm:flex-initial min-w-0">
+              {isAdmin && item.reorderLink && (
+                <a
+                  href={item.reorderLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="form-actions-secondary px-4 py-3 rounded-lg border border-neutral-600 bg-neutral-800 hover:bg-neutral-700 font-medium text-center text-neutral-200"
+                >
+                  Purchase / Order
+                </a>
+              )}
+              {isAdmin && (
+                <Link
+                  to={`/inventory/${id}/edit`}
+                  state={{ returnTo: `/inventory/${id}` }}
+                  className={editLinkClass}
+                >
+                  Edit item
+                </Link>
+              )}
+            </div>
+          </div>
+          {hasPendingChanges && (
+            <div className="flex w-full sm:w-auto sm:justify-end">
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={saveMutation.isPending}
+                className="form-actions-primary px-4 py-3 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-50 font-medium"
+              >
+                {saveMutation.isPending ? "Saving…" : "Save changes"}
+              </button>
+            </div>
           )}
-          {isAdmin && item.reorderLink && (
-            <a
-              href={item.reorderLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full sm:w-auto px-4 py-3 rounded-lg bg-neutral-700 hover:bg-neutral-600 font-medium text-center"
-            >
-              Purchase / Order
-            </a>
-          )}
-          <Link
-            to="/inventory"
-            className="w-full sm:w-auto px-4 py-3 rounded-lg bg-neutral-700 hover:bg-neutral-600 text-center"
-          >
-            Back to list
-          </Link>
         </div>
       </div>
 
@@ -195,7 +214,7 @@ export default function ProductDescription() {
       {storageLocationId && shopLocationId && (
         <section className="rounded-xl border border-neutral-700 bg-neutral-800/50 p-5 space-y-4">
           <h2 className="text-sm font-medium text-neutral-400 uppercase tracking-wider">Quick actions</h2>
-          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-start sm:gap-3">
             <button
               type="button"
               onClick={handleReceiveToStorage}
@@ -207,7 +226,7 @@ export default function ProductDescription() {
               type="button"
               onClick={handleMoveToShop}
               disabled={storageQty < 1}
-              className="w-full sm:w-auto px-4 py-3 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              className="w-full sm:w-auto px-4 py-3 rounded-lg border border-amber-500/60 text-amber-400 hover:bg-amber-500/10 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
             >
               Move 1 to shop
             </button>
@@ -229,29 +248,37 @@ export default function ProductDescription() {
               return (
                 <div
                   key={q.locationId}
-                  className="flex flex-wrap items-center gap-4 p-4 rounded-lg bg-neutral-800 border border-neutral-700"
+                  className="flex flex-col gap-3 rounded-xl border border-neutral-700 bg-neutral-800 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
                 >
-                  <span className="font-medium text-neutral-200 min-w-0 sm:min-w-[100px] flex-shrink-0">{q.locationName}</span>
-                  <span className="min-w-[2.5rem] text-lg font-semibold tabular-nums text-white">
-                    {total}
-                  </span>
-                  <div className="flex items-stretch rounded-lg overflow-hidden border border-neutral-600 bg-neutral-700">
+                  <span className="font-medium text-neutral-200 text-base shrink-0">{q.locationName}</span>
+                  <div
+                    className="flex w-full touch-manipulation items-stretch overflow-hidden rounded-xl border border-neutral-600 bg-neutral-900/50 shadow-inner sm:w-auto sm:min-w-[min(100%,14rem)]"
+                    role="group"
+                    aria-label={`Adjust quantity for ${q.locationName}`}
+                  >
                     <button
                       type="button"
-                      aria-label="Decrease quantity"
                       disabled={total <= 0}
                       onClick={() => adjustQuantity(q.locationId, total, -1)}
-                      className="px-3 py-2 bg-neutral-600 hover:bg-neutral-500 disabled:opacity-50 disabled:cursor-not-allowed text-neutral-200 font-medium"
+                      aria-label={`Decrease quantity at ${q.locationName}`}
+                      className="flex min-h-[52px] min-w-[52px] shrink-0 items-center justify-center bg-neutral-700 text-2xl font-semibold leading-none text-neutral-100 transition hover:bg-neutral-600 active:bg-neutral-500 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-35 disabled:active:scale-100 sm:min-h-[48px] sm:min-w-[56px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-inset"
                     >
-                      −
+                      <span aria-hidden>−</span>
                     </button>
+                    <div
+                      className="flex min-h-[52px] min-w-0 flex-1 select-none items-center justify-center border-x border-neutral-600 px-2 text-center text-2xl font-semibold tabular-nums text-white sm:min-h-[48px] sm:min-w-[4.5rem] sm:flex-none sm:px-4"
+                      aria-live="polite"
+                      aria-atomic="true"
+                    >
+                      {total}
+                    </div>
                     <button
                       type="button"
-                      aria-label="Increase quantity"
                       onClick={() => adjustQuantity(q.locationId, total, 1)}
-                      className="px-3 py-2 bg-neutral-600 hover:bg-neutral-500 text-neutral-200 font-medium"
+                      aria-label={`Increase quantity at ${q.locationName}`}
+                      className="flex min-h-[52px] min-w-[52px] shrink-0 items-center justify-center bg-neutral-700 text-2xl font-semibold leading-none text-neutral-100 transition hover:bg-neutral-600 active:bg-neutral-500 active:scale-[0.98] sm:min-h-[48px] sm:min-w-[56px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-inset"
                     >
-                      +
+                      <span aria-hidden>+</span>
                     </button>
                   </div>
                 </div>
