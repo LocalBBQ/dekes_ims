@@ -29,7 +29,8 @@ usersRouter.post("/", async (req: Request, res: Response): Promise<void> => {
   const body = req.body as CreateUserBody;
   const email = body.email?.trim();
   const password = body.password;
-  const role = body.role === "admin" || body.role === "staff" ? body.role : "staff";
+  const role =
+    body.role === "admin" || body.role === "manager" || body.role === "staff" ? body.role : "staff";
   if (!email) {
     res.status(400).json({ error: "email required" });
     return;

@@ -1,4 +1,30 @@
-export type UserRole = "admin" | "staff";
+export type UserRole = "admin" | "manager" | "staff";
+
+export type TaskColumn = "todo" | "need_purchase" | "need_fix";
+
+export const TASK_COLUMNS: TaskColumn[] = ["todo", "need_purchase", "need_fix"];
+
+export const TASK_COLUMN_LABELS: Record<TaskColumn, string> = {
+  todo: "To do",
+  need_purchase: "Need to purchase",
+  need_fix: "Need to fix",
+};
+
+export interface Task {
+  id: string;
+  title: string;
+  column: TaskColumn;
+  sortOrder: number;
+  createdById: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TaskBoardBody {
+  todo: string[];
+  need_purchase: string[];
+  need_fix: string[];
+}
 
 export interface User {
   id: string;

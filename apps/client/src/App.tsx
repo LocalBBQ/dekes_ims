@@ -8,6 +8,7 @@ import ProductDescription from "./pages/ProductDescription";
 import AdminLocations from "./pages/admin/AdminLocations";
 import AdminCategories from "./pages/admin/AdminCategories";
 import AdminUsers from "./pages/admin/AdminUsers";
+import Tasks from "./pages/Tasks";
 import Layout from "./components/Layout";
 
 function ProtectedRoute({ children, adminOnly }: { children: React.ReactNode; adminOnly?: boolean }) {
@@ -41,6 +42,7 @@ export default function App() {
         }
       >
         <Route index element={<Dashboard />} />
+        <Route path="tasks" element={<Tasks />} />
         <Route path="inventory" element={<InventoryList />} />
         <Route
           path="inventory/new"

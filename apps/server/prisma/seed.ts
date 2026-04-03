@@ -176,6 +176,18 @@ async function main() {
   });
   console.log("Staff user:", staff.email, "| password: staff123");
 
+  const managerHash = await bcrypt.hash("manager123", 10);
+  const manager = await prisma.user.upsert({
+    where: { email: "manager@example.com" },
+    update: {},
+    create: {
+      email: "manager@example.com",
+      passwordHash: managerHash,
+      role: "manager",
+    },
+  });
+  console.log("Manager user:", manager.email, "| password: manager123");
+
   const locations = ["Shop", "Storage unit"];
   const locationIds: string[] = [];
   for (const name of locations) {

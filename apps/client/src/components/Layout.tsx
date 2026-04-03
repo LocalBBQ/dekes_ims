@@ -4,6 +4,7 @@ import { useAuth } from "../contexts/AuthContext";
 
 const PATH_TITLES: Record<string, string> = {
   "/": "Dashboard",
+  "/tasks": "Shop tasks",
   "/inventory": "Inventory",
   "/admin/locations": "Locations",
   "/admin/categories": "Categories",
@@ -12,6 +13,7 @@ const PATH_TITLES: Record<string, string> = {
 
 function getPageTitle(pathname: string): string {
   if (pathname === "/" || pathname === "") return "Dashboard";
+  if (pathname === "/tasks") return "Shop tasks";
   if (pathname === "/inventory/new") return "New item";
   if (/^\/inventory\/[^/]+\/edit$/.test(pathname)) return "Edit item";
   if (/^\/inventory\/[^/]+$/.test(pathname)) return "Item";
@@ -41,6 +43,8 @@ function getBackTarget(pathname: string, state: unknown): string | null {
   }
 
   if (pathname.startsWith("/admin/")) return "/";
+
+  if (pathname === "/tasks") return "/";
 
   return "/";
 }
@@ -83,6 +87,9 @@ export default function Layout() {
       <NavLink to="/inventory" className={navClass} onClick={() => setMenuOpen(false)}>
         Inventory
       </NavLink>
+      <NavLink to="/tasks" className={navClass} onClick={() => setMenuOpen(false)}>
+        Shop tasks
+      </NavLink>
       {user?.role === "admin" && (
         <>
           <NavLink to="/admin/locations" className={navClass} onClick={() => setMenuOpen(false)}>
@@ -106,6 +113,9 @@ export default function Layout() {
       </NavLink>
       <NavLink to="/inventory" className={navLinkMobile} onClick={() => setMenuOpen(false)}>
         Inventory
+      </NavLink>
+      <NavLink to="/tasks" className={navLinkMobile} onClick={() => setMenuOpen(false)}>
+        Shop tasks
       </NavLink>
       {user?.role === "admin" && (
         <>
@@ -132,7 +142,7 @@ export default function Layout() {
         Skip to main content
       </a>
       <header className="sticky top-0 z-20 bg-neutral-800 border-b border-neutral-700 px-3 py-2.5 sm:px-4 sm:py-3 flex items-center justify-between gap-2 min-h-[52px] safe-area-inset-top">
-        {/* Left: Back (non-dashboard) + mobile menu + title */}
+        {/* Left: Back (non-dashboard) + page title */}
         <div className="flex items-center gap-1 sm:gap-2 min-w-0 flex-1">
           {backTarget != null && (
             <Link
@@ -146,44 +156,47 @@ export default function Layout() {
               <span className="whitespace-nowrap">Back</span>
             </Link>
           )}
-          <button
-            type="button"
-            onClick={() => setMenuOpen((o) => !o)}
-            className="shrink-0 p-2 -ml-0.5 rounded-lg text-neutral-300 hover:bg-neutral-700 hover:text-white transition lg:hidden"
-            aria-label={menuOpen ? "Close menu" : "Open menu"}
-            aria-expanded={menuOpen}
-          >
-            <span className="sr-only">{menuOpen ? "Close menu" : "Open menu"}</span>
-            <svg
-              className="w-6 h-6 transition-transform"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-              aria-hidden
-            >
-              {menuOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              ) : (
-                <>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-                </>
-              )}
-            </svg>
-          </button>
           <span className="text-neutral-100 font-semibold truncate min-w-0 lg:hidden">{pageTitle}</span>
         </div>
 
         {/* Desktop: full nav */}
         <nav className="hidden lg:flex items-center gap-1 flex-wrap">{mainLinks}</nav>
 
-        {/* Right: user + logout — compact on mobile */}
-        <div className="flex items-center gap-1 sm:gap-2 min-w-0 shrink-0">
+        {/* Right: Menu (mobile) + user + logout (desktop) */}
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0 shrink-0">
+          <div className="flex items-center gap-1.5 lg:hidden">
+            <span className="text-sm font-medium text-neutral-300">Menu</span>
+            <button
+              type="button"
+              onClick={() => setMenuOpen((o) => !o)}
+              className="shrink-0 p-2 rounded-lg text-neutral-300 hover:bg-neutral-700 hover:text-white transition"
+              aria-label={menuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={menuOpen}
+            >
+              <span className="sr-only">{menuOpen ? "Close menu" : "Open menu"}</span>
+              <svg
+                className="w-6 h-6 transition-transform"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+                aria-hidden
+              >
+                {menuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                  </>
+                )}
+              </svg>
+            </button>
+          </div>
           <span className="hidden sm:inline text-neutral-400 text-sm truncate max-w-[140px]">{user?.email}</span>
           <button
             type="button"
             onClick={handleLogout}
-            className="px-2.5 py-2 sm:px-3 sm:py-2 rounded-lg bg-neutral-700 hover:bg-neutral-600 text-sm font-medium shrink-0"
+            className="hidden lg:inline-flex items-center px-2.5 py-2 sm:px-3 sm:py-2 rounded-lg bg-neutral-700 hover:bg-neutral-600 text-sm font-medium shrink-0"
           >
             Log out
           </button>
@@ -202,10 +215,10 @@ export default function Layout() {
         aria-hidden
       />
 
-      {/* Mobile slide-out panel */}
+      {/* Mobile slide-out panel (from right; matches header Menu control) */}
       <aside
-        className="fixed top-0 left-0 z-20 h-full w-[min(300px,88vw)] max-w-full bg-neutral-800/95 border-r border-neutral-700/80 shadow-2xl lg:hidden flex flex-col transition-[transform] duration-300 ease-out"
-        style={{ transform: menuOpen ? "translateX(0)" : "translateX(-100%)" }}
+        className="fixed top-0 right-0 z-20 h-full w-[min(300px,88vw)] max-w-full bg-neutral-800/95 border-l border-neutral-700/80 shadow-2xl lg:hidden flex flex-col transition-[transform] duration-300 ease-out"
+        style={{ transform: menuOpen ? "translateX(0)" : "translateX(100%)" }}
         aria-modal="true"
         aria-label="Main navigation"
       >

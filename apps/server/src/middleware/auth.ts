@@ -64,3 +64,13 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction): v
   }
   next();
 }
+
+/** Managers and admins can create and edit shop task lists; staff is read-only. */
+export function requireManagerOrAdmin(req: Request, res: Response, next: NextFunction): void {
+  const user = (req as Request & { user?: SessionUser }).user;
+  if (!user || (user.role !== "admin" && user.role !== "manager")) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  next();
+}

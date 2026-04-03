@@ -10,6 +10,7 @@ import { categoriesRouter } from "./routes/categories.js";
 import { inventoryRouter } from "./routes/inventory.js";
 import { settingsRouter } from "./routes/settings.js";
 import { fieldDefinitionsRouter } from "./routes/fieldDefinitions.js";
+import { tasksRouter } from "./routes/tasks.js";
 import { requireAuth } from "./middleware/auth.js";
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -45,6 +46,7 @@ app.use("/api/categories", requireAuth, categoriesRouter);
 app.use("/api/inventory", requireAuth, inventoryRouter);
 app.use("/api/settings", requireAuth, settingsRouter);
 app.use("/api/field-definitions", requireAuth, fieldDefinitionsRouter);
+app.use("/api/tasks", requireAuth, tasksRouter);
 // Production: serve client (from apps/server/dist -> apps/client/dist)
 if (isProd) {
     const clientDir = path.join(__dirname, "../../client/dist");

@@ -10,7 +10,7 @@ export default function AdminUsers() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [role, setRole] = useState<"admin" | "staff">("staff");
+  const [role, setRole] = useState<"admin" | "manager" | "staff">("staff");
 
   const { data: users, isLoading } = useQuery({
     queryKey: ["users"],
@@ -18,7 +18,7 @@ export default function AdminUsers() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (body: { email: string; password: string; role: "admin" | "staff" }) =>
+    mutationFn: (body: { email: string; password: string; role: "admin" | "manager" | "staff" }) =>
       api.users.create(body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
@@ -48,8 +48,9 @@ export default function AdminUsers() {
     <div className="space-y-6">
       <h1 className="text-xl font-semibold">Users</h1>
       <p className="text-neutral-400 text-sm">
-        Create staff or admin accounts. Staff can view and update inventory; admins can also manage
-        fields, locations, and users.
+        Create staff, manager, or admin accounts. Staff can view and update inventory and read the shop
+        task board. Managers can edit that task board. Admins can also manage fields, locations, and
+        users.
       </p>
 
       <form
@@ -108,10 +109,11 @@ export default function AdminUsers() {
           <label className="block text-sm text-neutral-400 mb-1">Role</label>
           <select
             value={role}
-            onChange={(e) => setRole(e.target.value as "admin" | "staff")}
+            onChange={(e) => setRole(e.target.value as "admin" | "manager" | "staff")}
             className="w-full px-4 py-3 rounded-lg bg-neutral-700 border border-neutral-600 focus:outline-none focus:ring-2 focus:ring-amber-500"
           >
             <option value="staff">Staff</option>
+            <option value="manager">Manager</option>
             <option value="admin">Admin</option>
           </select>
         </div>

@@ -1,3 +1,5 @@
+import type { Task, TaskBoardBody, TaskColumn } from "@shop-inventory/shared";
+
 const base = (import.meta as { env?: Record<string, string> }).env?.VITE_API_URL || "/api";
 
 const TOKEN_KEY = "auth_token";
@@ -55,7 +57,7 @@ export const api = {
   users: {
     list: () =>
       request<{ id: string; email: string; role: string; createdAt: string }[]>("/users"),
-    create: (body: { email: string; password: string; role: "admin" | "staff" }) =>
+    create: (body: { email: string; password: string; role: "admin" | "manager" | "staff" }) =>
       request<{ id: string; email: string; role: string; createdAt: string }>("/users", {
         method: "POST",
         json: body,
@@ -264,5 +266,15 @@ export const api = {
       if (!res.ok) throw new Error(data.error || res.statusText || "Import failed");
       return data as { created: number; updated: number; total: number };
     },
+  },
+  tasks: {
+    list: () => request<Task[]>("/tasks"),
+    create: (body: { title: string; column: TaskColumn }) =>
+      request<Task>("/tasks", { method: "POST", json: body }),
+    update: (id: string, body: { title: string }) =>
+      request<Task>("/tasks/" + id, { method: "PATCH", json: body }),
+    delete: (id: string) => request<void>("/tasks/" + id, { method: "DELETE" }),
+    putBoard: (body: TaskBoardBody) =>
+      request<Task[]>("/tasks/board", { method: "PUT", json: body }),
   },
 };

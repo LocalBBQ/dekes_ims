@@ -11,8 +11,26 @@ model User {
   id           String   @id @default(cuid())
   email        String   @unique
   passwordHash String
-  role         String   // "admin" | "staff"
+  role         String   // "admin" | "manager" | "staff"
   createdAt    DateTime @default(now())
+  tasksCreated Task[]
+}
+
+enum TaskColumn {
+  todo
+  need_purchase
+  need_fix
+}
+
+model Task {
+  id          String     @id @default(cuid())
+  title       String
+  column      TaskColumn
+  sortOrder   Int        @default(0)
+  createdById String?
+  createdBy   User?      @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 }
 
 model Location {
