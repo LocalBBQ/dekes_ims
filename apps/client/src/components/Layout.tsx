@@ -73,38 +73,8 @@ export default function Layout() {
     navigate("/login");
   };
 
-  const navClass = ({ isActive }: { isActive: boolean }) =>
-    `block px-4 py-3 rounded-lg text-sm font-medium transition ${isActive ? "bg-neutral-700 text-white" : "text-neutral-300 hover:bg-neutral-800"}`;
-
   const navLinkMobile = ({ isActive }: { isActive: boolean }) =>
     `block w-full text-left px-4 py-3.5 rounded-xl text-base font-medium transition ${isActive ? "bg-neutral-700 text-white" : "text-neutral-200 hover:bg-neutral-700/80 active:bg-neutral-600"}`;
-
-  const mainLinks = (
-    <>
-      <NavLink to="/" end className={navClass} onClick={() => setMenuOpen(false)}>
-        Dashboard
-      </NavLink>
-      <NavLink to="/inventory" className={navClass} onClick={() => setMenuOpen(false)}>
-        Inventory
-      </NavLink>
-      <NavLink to="/tasks" className={navClass} onClick={() => setMenuOpen(false)}>
-        Shop tasks
-      </NavLink>
-      {user?.role === "admin" && (
-        <>
-          <NavLink to="/admin/locations" className={navClass} onClick={() => setMenuOpen(false)}>
-            Locations
-          </NavLink>
-          <NavLink to="/admin/categories" className={navClass} onClick={() => setMenuOpen(false)}>
-            Categories
-          </NavLink>
-          <NavLink to="/admin/users" className={navClass} onClick={() => setMenuOpen(false)}>
-            Users
-          </NavLink>
-        </>
-      )}
-    </>
-  );
 
   const mainLinksMobile = (
     <>
@@ -156,56 +126,43 @@ export default function Layout() {
               <span className="whitespace-nowrap">Back</span>
             </Link>
           )}
-          <span className="text-neutral-100 font-semibold truncate min-w-0 lg:hidden">{pageTitle}</span>
+          <span className="text-neutral-100 font-semibold truncate min-w-0">{pageTitle}</span>
         </div>
 
-        {/* Desktop: full nav */}
-        <nav className="hidden lg:flex items-center gap-1 flex-wrap">{mainLinks}</nav>
-
-        {/* Right: Menu (mobile) + user + logout (desktop) */}
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0 shrink-0">
-          <div className="flex items-center gap-1.5 lg:hidden">
-            <span className="text-sm font-medium text-neutral-300">Menu</span>
-            <button
-              type="button"
-              onClick={() => setMenuOpen((o) => !o)}
-              className="shrink-0 p-2 rounded-lg text-neutral-300 hover:bg-neutral-700 hover:text-white transition"
-              aria-label={menuOpen ? "Close menu" : "Open menu"}
-              aria-expanded={menuOpen}
-            >
-              <span className="sr-only">{menuOpen ? "Close menu" : "Open menu"}</span>
-              <svg
-                className="w-6 h-6 transition-transform"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-                aria-hidden
-              >
-                {menuOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                ) : (
-                  <>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-                  </>
-                )}
-              </svg>
-            </button>
-          </div>
-          <span className="hidden sm:inline text-neutral-400 text-sm truncate max-w-[140px]">{user?.email}</span>
+        {/* Right: menu opens navigation + account (logout lives in drawer) */}
+        <div className="flex items-center shrink-0">
           <button
             type="button"
-            onClick={handleLogout}
-            className="hidden lg:inline-flex items-center px-2.5 py-2 sm:px-3 sm:py-2 rounded-lg bg-neutral-700 hover:bg-neutral-600 text-sm font-medium shrink-0"
+            onClick={() => setMenuOpen((o) => !o)}
+            className="shrink-0 p-2 -mr-1 rounded-lg text-neutral-300 hover:bg-neutral-700 hover:text-white transition"
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={menuOpen}
+            aria-controls="app-navigation-panel"
           >
-            Log out
+            <span className="sr-only">{menuOpen ? "Close menu" : "Open menu"}</span>
+            <svg
+              className="w-6 h-6 transition-transform"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+              aria-hidden
+            >
+              {menuOpen ? (
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              ) : (
+                <>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                </>
+              )}
+            </svg>
           </button>
         </div>
       </header>
 
-      {/* Mobile slide-out overlay */}
+      {/* Slide-out overlay (all breakpoints) */}
       <div
-        className="fixed inset-0 z-10 bg-black/40 backdrop-blur-md lg:hidden transition-opacity duration-300 ease-out"
+        className="fixed inset-0 z-10 bg-black/40 backdrop-blur-md transition-opacity duration-300 ease-out"
         style={{
           opacity: menuOpen ? 1 : 0,
           pointerEvents: menuOpen ? "auto" : "none",
@@ -215,12 +172,14 @@ export default function Layout() {
         aria-hidden
       />
 
-      {/* Mobile slide-out panel (from right; matches header Menu control) */}
+      {/* Slide-out panel from right (all breakpoints) */}
       <aside
-        className="fixed top-0 right-0 z-20 h-full w-[min(300px,88vw)] max-w-full bg-neutral-800/95 border-l border-neutral-700/80 shadow-2xl lg:hidden flex flex-col transition-[transform] duration-300 ease-out"
+        id="app-navigation-panel"
+        className="fixed top-0 right-0 z-20 h-full w-[min(300px,88vw)] max-w-full bg-neutral-800/95 border-l border-neutral-700/80 shadow-2xl flex flex-col transition-[transform] duration-300 ease-out"
         style={{ transform: menuOpen ? "translateX(0)" : "translateX(100%)" }}
         aria-modal="true"
         aria-label="Main navigation"
+        aria-hidden={!menuOpen}
       >
         <div className="flex items-center justify-between px-4 py-3.5 border-b border-neutral-700/80 shrink-0 safe-area-inset-top">
           <span className="font-semibold text-neutral-100 tracking-tight">Menu</span>
