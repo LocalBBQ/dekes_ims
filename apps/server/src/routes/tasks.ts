@@ -1,5 +1,5 @@
 import { Router, Request, Response } from "express";
-import type { TaskColumn } from "@prisma/client";
+import type { TaskColumn } from "@shop-inventory/shared";
 import { prisma } from "../lib/prisma.js";
 import { requireManagerOrAdmin } from "../middleware/auth.js";
 
@@ -40,7 +40,7 @@ tasksRouter.get("/", async (_req: Request, res: Response): Promise<void> => {
 });
 
 tasksRouter.put("/board", requireManagerOrAdmin, async (req: Request, res: Response): Promise<void> => {
-  const body = req.body as { todo?: unknown; need_purchase?: unknown; need_fix?: unknown };
+  const body = req.body as Record<string, unknown>;
   const board: Record<TaskColumn, string[]> = {
     todo: [],
     need_purchase: [],
@@ -67,7 +67,7 @@ tasksRouter.put("/board", requireManagerOrAdmin, async (req: Request, res: Respo
   }
   if (count > 0) {
     const existing = await prisma.task.findMany({ select: { id: true } });
-    const existingSet = new Set(existing.map((r) => r.id));
+    const existingSet = new Set(existing.map((r: { id: string }) => r.id));
     for (const id of allIds) {
       if (!existingSet.has(id)) {
         res.status(400).json({ error: "unknown task id in board" });
