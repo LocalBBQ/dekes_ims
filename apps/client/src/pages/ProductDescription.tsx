@@ -32,10 +32,6 @@ export default function ProductDescription() {
     queryFn: () => api.inventory.get(id!),
     enabled: !!id,
   });
-  const { data: locations } = useQuery({
-    queryKey: ["locations"],
-    queryFn: () => api.locations.list(),
-  });
 
   const [localQuantities, setLocalQuantities] = useState<Record<string, number>>({});
 
@@ -52,17 +48,7 @@ export default function ProductDescription() {
     }
   }, [item?.id]);
 
-  const storageLocation = locations?.find(
-    (l) => l.name === "Storage unit" || l.name.toLowerCase().includes("storage")
-  );
-  const shopLocation = locations?.find(
-    (l) => l.name === "Shop" || l.name.toLowerCase().includes("shop")
-  );
-  const storageLocationId = storageLocation?.id ?? "";
-  const shopLocationId = shopLocation?.id ?? "";
-
   const getLocal = (locId: string) => localQuantities[locId] ?? getServerTotal(item, locId);
-  const storageQty = getLocal(storageLocationId);
 
   const allLocationIds = new Set([
     ...(item?.quantities.map((q) => q.locationId) ?? []),
@@ -100,22 +86,6 @@ export default function ProductDescription() {
     saveMutation.mutate(updates);
   };
 
-  const handleReceiveToStorage = () => {
-    if (!storageLocationId) return;
-    setLocalQuantities((prev) => ({
-      ...prev,
-      [storageLocationId]: (prev[storageLocationId] ?? getServerTotal(item, storageLocationId)) + 1,
-    }));
-  };
-  const handleMoveToShop = () => {
-    if (!storageLocationId || !shopLocationId || storageQty < 1) return;
-    setLocalQuantities((prev) => ({
-      ...prev,
-      [storageLocationId]: storageQty - 1,
-      [shopLocationId]: (prev[shopLocationId] ?? getServerTotal(item, shopLocationId)) + 1,
-    }));
-  };
-
   const adjustQuantity = (locationId: string, currentTotal: number, direction: 1 | -1) => {
     const next = Math.max(0, currentTotal + direction);
     setLocalQuantities((prev) => ({ ...prev, [locationId]: next }));
@@ -149,26 +119,20 @@ export default function ProductDescription() {
             </p>
           )}
         </div>
-        <div className="flex w-full flex-col gap-2 sm:w-auto sm:max-w-xl">
-          <div className="page-toolbar">
-            <Link
-              to="/inventory"
-              className="form-actions-secondary px-4 py-3 rounded-lg bg-neutral-700 hover:bg-neutral-600 text-center"
-            >
-              Back to list
-            </Link>
-            <div className="page-toolbar-end flex-1 sm:flex-initial min-w-0">
-              {isAdmin && item.reorderLink && (
-                <a
-                  href={item.reorderLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="form-actions-secondary px-4 py-3 rounded-lg border border-neutral-600 bg-neutral-800 hover:bg-neutral-700 font-medium text-center text-neutral-200"
-                >
-                  Purchase / Order
-                </a>
-              )}
-              {isAdmin && (
+        {(isAdmin || hasPendingChanges) && (
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:max-w-xl">
+            {isAdmin && (
+              <div className="page-toolbar-end w-full min-w-0">
+                {item.reorderLink && (
+                  <a
+                    href={item.reorderLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="form-actions-secondary px-4 py-3 rounded-lg border border-neutral-600 bg-neutral-800 hover:bg-neutral-700 font-medium text-center text-neutral-200"
+                  >
+                    Purchase / Order
+                  </a>
+                )}
                 <Link
                   to={`/inventory/${id}/edit`}
                   state={{ returnTo: `/inventory/${id}` }}
@@ -176,22 +140,22 @@ export default function ProductDescription() {
                 >
                   Edit item
                 </Link>
-              )}
-            </div>
+              </div>
+            )}
+            {hasPendingChanges && (
+              <div className="flex w-full sm:w-auto sm:justify-end">
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={saveMutation.isPending}
+                  className="form-actions-primary px-4 py-3 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-50 font-medium"
+                >
+                  {saveMutation.isPending ? "Saving…" : "Save changes"}
+                </button>
+              </div>
+            )}
           </div>
-          {hasPendingChanges && (
-            <div className="flex w-full sm:w-auto sm:justify-end">
-              <button
-                type="button"
-                onClick={handleSave}
-                disabled={saveMutation.isPending}
-                className="form-actions-primary px-4 py-3 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-50 font-medium"
-              >
-                {saveMutation.isPending ? "Saving…" : "Save changes"}
-              </button>
-            </div>
-          )}
-        </div>
+        )}
       </div>
 
       <section className="rounded-xl border border-neutral-700 bg-neutral-800/50 p-5 space-y-4">
@@ -210,32 +174,6 @@ export default function ProductDescription() {
           </div>
         </dl>
       </section>
-
-      {storageLocationId && shopLocationId && (
-        <section className="rounded-xl border border-neutral-700 bg-neutral-800/50 p-5 space-y-4">
-          <h2 className="text-sm font-medium text-neutral-400 uppercase tracking-wider">Quick actions</h2>
-          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-start sm:gap-3">
-            <button
-              type="button"
-              onClick={handleReceiveToStorage}
-              className="w-full sm:w-auto px-4 py-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 font-medium"
-            >
-              + Receive to storage
-            </button>
-            <button
-              type="button"
-              onClick={handleMoveToShop}
-              disabled={storageQty < 1}
-              className="w-full sm:w-auto px-4 py-3 rounded-lg border border-amber-500/60 text-amber-400 hover:bg-amber-500/10 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-            >
-              Move 1 to shop
-            </button>
-          </div>
-          {storageQty < 1 && (
-            <p className="text-sm text-neutral-500">No stock in storage. Receive inventory first, then move to shop.</p>
-          )}
-        </section>
-      )}
 
       <section className="rounded-xl border border-neutral-700 bg-neutral-800/50 p-5 space-y-4">
         <h2 className="text-sm font-medium text-neutral-400 uppercase tracking-wider">Quantity by location</h2>

@@ -51,9 +51,12 @@ export async function requireAuth(req, res, next) {
     req.user = user;
     next();
 }
+function roleKey(role) {
+    return (role ?? "").trim().toLowerCase();
+}
 export function requireAdmin(req, res, next) {
     const user = req.user;
-    if (!user || user.role !== "admin") {
+    if (!user || roleKey(user.role) !== "admin") {
         res.status(403).json({ error: "Forbidden" });
         return;
     }
@@ -62,7 +65,8 @@ export function requireAdmin(req, res, next) {
 /** Managers and admins can create and edit shop task lists; staff is read-only. */
 export function requireManagerOrAdmin(req, res, next) {
     const user = req.user;
-    if (!user || (user.role !== "admin" && user.role !== "manager")) {
+    const r = roleKey(user?.role);
+    if (!user || (r !== "admin" && r !== "manager")) {
         res.status(403).json({ error: "Forbidden" });
         return;
     }

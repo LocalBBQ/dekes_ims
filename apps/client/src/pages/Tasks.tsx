@@ -46,9 +46,14 @@ function placeTask(
   return board;
 }
 
+function canManageTasks(role: string | undefined): boolean {
+  const r = (role ?? "").trim().toLowerCase();
+  return r === "admin" || r === "manager";
+}
+
 export default function Tasks() {
   const { user } = useAuth();
-  const canManage = user?.role === "admin" || user?.role === "manager";
+  const canManage = canManageTasks(user?.role);
   const queryClient = useQueryClient();
   const [newTitle, setNewTitle] = useState<Record<TaskColumn, string>>({
     todo: "",
@@ -83,6 +88,9 @@ export default function Tasks() {
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       setNewTitle((prev) => ({ ...prev, [vars.column]: "" }));
+    },
+    onError: (err) => {
+      console.error("Create task failed:", err);
     },
   });
 
@@ -227,7 +235,38 @@ export default function Tasks() {
                 {COLUMN_LABELS[column]}
               </h2>
 
-              <div className="flex flex-col flex-1 p-2 gap-2">
+              <div className="flex flex-col flex-1 p-2 gap-2 min-h-0">
+                {canManage && (
+                  <form
+                    className="shrink-0 border-b border-neutral-700/80 pb-3 mb-1"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const title = newTitle[column].trim();
+                      if (!title) return;
+                      createMutation.mutate({ title, column });
+                    }}
+                  >
+                    <label className="sr-only">New task in {COLUMN_LABELS[column]}</label>
+                    <div className="flex gap-2">
+                      <input
+                        value={newTitle[column]}
+                        onChange={(e) =>
+                          setNewTitle((prev) => ({ ...prev, [column]: e.target.value }))
+                        }
+                        placeholder="Add a task…"
+                        className="flex-1 min-w-0 px-3 py-2 rounded-lg bg-neutral-700 border border-neutral-600 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      />
+                      <button
+                        type="submit"
+                        disabled={createMutation.isPending || !newTitle[column].trim()}
+                        className="px-3 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-sm font-medium disabled:opacity-50 shrink-0"
+                      >
+                        {createMutation.isPending ? "…" : "Add"}
+                      </button>
+                    </div>
+                  </form>
+                )}
+
                 {columnTasks.length === 0 && !canManage && (
                   <p className="text-neutral-500 text-sm px-2 py-6 text-center">No tasks yet</p>
                 )}
@@ -304,49 +343,26 @@ export default function Tasks() {
 
                 {canManage && (
                   <div
-                    className="min-h-10 flex-1 rounded-lg border border-dashed border-neutral-600/80 flex items-center justify-center text-neutral-500 text-xs px-2 text-center"
+                    className="shrink-0 min-h-12 mt-auto rounded-lg border border-dashed border-neutral-600/80 flex items-center justify-center text-neutral-500 text-xs px-2 text-center py-3"
                     onDragOver={handleDragOver}
                     onDrop={(e) => handleDropAppend(e, column)}
                   >
                     Drop here to add to end
                   </div>
                 )}
-
-                {canManage && (
-                  <form
-                    className="pt-1 border-t border-neutral-700/80 mt-auto"
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      const title = newTitle[column].trim();
-                      if (!title) return;
-                      createMutation.mutate({ title, column });
-                    }}
-                  >
-                    <label className="sr-only">New task in {COLUMN_LABELS[column]}</label>
-                    <div className="flex gap-2 mt-2">
-                      <input
-                        value={newTitle[column]}
-                        onChange={(e) =>
-                          setNewTitle((prev) => ({ ...prev, [column]: e.target.value }))
-                        }
-                        placeholder="Add a task…"
-                        className="flex-1 min-w-0 px-3 py-2 rounded-lg bg-neutral-700 border border-neutral-600 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
-                      />
-                      <button
-                        type="submit"
-                        disabled={createMutation.isPending || !newTitle[column].trim()}
-                        className="px-3 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-sm font-medium disabled:opacity-50 shrink-0"
-                      >
-                        Add
-                      </button>
-                    </div>
-                  </form>
-                )}
               </div>
             </section>
           );
         })}
       </div>
+
+      {createMutation.isError && (
+        <p className="text-sm text-red-400" role="alert">
+          {createMutation.error instanceof Error
+            ? createMutation.error.message
+            : "Could not add task"}
+        </p>
+      )}
 
       {putBoardMutation.isError && (
         <p className="text-sm text-red-400">
