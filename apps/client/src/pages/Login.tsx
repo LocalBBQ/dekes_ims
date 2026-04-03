@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 
 export default function Login() {
+  const [searchParams] = useSearchParams();
+  const resetSuccess = searchParams.get("reset") === "success";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -58,6 +60,17 @@ export default function Login() {
               className="w-full px-4 py-3 rounded-lg bg-neutral-800 border border-neutral-600 text-white placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-amber-500"
             />
           </div>
+          <div className="text-right">
+            <Link
+              to="/forgot-password"
+              className="text-sm text-amber-500 hover:text-amber-400"
+            >
+              Forgot password?
+            </Link>
+          </div>
+          {resetSuccess && (
+            <p className="text-emerald-400 text-sm">Your password was updated. You can sign in.</p>
+          )}
           {error && <p className="text-red-400 text-sm">{error}</p>}
           <button
             type="submit"

@@ -77,6 +77,15 @@ export interface LoginBody {
   password: string;
 }
 
+export interface ForgotPasswordBody {
+  email: string;
+}
+
+export interface ResetPasswordBody {
+  token: string;
+  password: string;
+}
+
 export interface QuantityAtLocationInput {
   quantity?: number;
   quantityInUse?: number;

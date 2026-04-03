@@ -12,6 +12,8 @@ import { settingsRouter } from "./routes/settings.js";
 import { fieldDefinitionsRouter } from "./routes/fieldDefinitions.js";
 import { tasksRouter } from "./routes/tasks.js";
 import { requireAuth } from "./middleware/auth.js";
+import { assertProductionMailEnv } from "./lib/mail.js";
+assertProductionMailEnv();
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 const isProd = process.env.NODE_ENV === "production";

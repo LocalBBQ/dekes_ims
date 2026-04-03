@@ -53,6 +53,16 @@ export const api = {
     logout: () => request<{ ok: boolean }>("/auth/logout", { method: "POST" }),
     me: () =>
       request<{ user: { id: string; email: string; role: string; createdAt: string } }>("/auth/me"),
+    forgotPassword: (email: string) =>
+      request<{ ok: boolean; message: string }>("/auth/forgot-password", {
+        method: "POST",
+        json: { email },
+      }),
+    resetPassword: (token: string, password: string) =>
+      request<{ ok: boolean }>("/auth/reset-password", {
+        method: "POST",
+        json: { token, password },
+      }),
   },
   users: {
     list: () =>
