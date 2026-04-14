@@ -3,7 +3,7 @@ import { Router } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { prisma } from "../lib/prisma.js";
-import { getPublicAppUrl, sendPasswordResetEmail } from "../lib/mail.js";
+import { getPublicAppUrl, isSmtpConfigured, sendPasswordResetEmail } from "../lib/mail.js";
 import { requireAuth } from "../middleware/auth.js";
 export const authRouter = Router();
 function getJwtSecret() {
@@ -52,6 +52,10 @@ authRouter.post("/forgot-password", async (req, res) => {
     const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
     if (!email) {
         res.status(400).json({ error: "Email required" });
+        return;
+    }
+    if (process.env.NODE_ENV === "production" && !isSmtpConfigured()) {
+        res.status(503).json({ error: "Password reset email is temporarily unavailable." });
         return;
     }
     const user = await prisma.user.findUnique({ where: { email } });

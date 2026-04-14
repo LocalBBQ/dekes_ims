@@ -30,20 +30,6 @@ export function getPublicAppUrl(): string {
   return "http://localhost:5173";
 }
 
-export function assertProductionMailEnv(): void {
-  if (process.env.NODE_ENV !== "production") return;
-  try {
-    getPublicAppUrl();
-  } catch (e) {
-    console.error(e);
-    process.exit(1);
-  }
-  if (!isSmtpConfigured()) {
-    console.error("SMTP_HOST, SMTP_USER, and SMTP_PASS are required in production for password reset email.");
-    process.exit(1);
-  }
-}
-
 export async function sendPasswordResetEmail(to: string, resetUrl: string): Promise<void> {
   const from = process.env.EMAIL_FROM?.trim() || process.env.SMTP_FROM?.trim() || "noreply@localhost";
   const subject = "Reset your Coffee Shop Inventory password";
